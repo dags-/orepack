@@ -12,6 +12,7 @@ var versions = `https://ore.spongepowered.org/api/v1/projects/%s/versions`
 type Version struct {
 	Name     string `json:"name"`
 	MD5      string `json:"md5"`
+	HREF     string `json:"href"`
 	Approved bool   `json:"staffApproved"`
 }
 

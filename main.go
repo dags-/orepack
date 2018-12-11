@@ -18,7 +18,6 @@ import (
 )
 
 const (
-	path  = "/com/orepack/:id/:version/:file"
 	group = "com.orepack"
 )
 
@@ -27,8 +26,10 @@ func main() {
 	flag.Parse()
 
 	router := fasthttprouter.New()
-	router.GET(path, repoHandlerWrapper)
-	router.NotFound = notFoundHandler
+	router.NotFound = redirectHandler
+	router.GET("/com/orepack/:id", redirectHandler)
+	router.GET("/com/orepack/:id/:version", redirectHandler)
+	router.GET("/com/orepack/:id/:version/:file", repoHandlerWrapper)
 	server := fasthttp.Server{
 		Handler:            router.Handler,
 		GetOnly:            true,
@@ -57,8 +58,31 @@ func handleStop() {
 	}
 }
 
-func notFoundHandler(ctx *fasthttp.RequestCtx) {
-	ctx.Redirect("https://ore.spongepowered.org", fasthttp.StatusPermanentRedirect)
+func redirectHandler(ctx *fasthttp.RequestCtx) {
+	var url string
+	var e error
+
+	id := value(ctx, "id")
+	version := value(ctx, "version")
+
+	if id == "" {
+		url = ore.HOME
+		e = nil
+	} else if version == "" {
+		url, e = ore.GetProjectPage(id)
+	} else {
+		url, e = ore.GetVersionPage(id, version)
+	}
+
+	if e != nil {
+		log.Printf("error (id:%s,version:%s): %s\n", id, version, e)
+	}
+
+	if url == "" {
+		url = ore.HOME
+	}
+
+	ctx.Redirect(url, fasthttp.StatusPermanentRedirect)
 }
 
 func repoHandlerWrapper(ctx *fasthttp.RequestCtx) {
