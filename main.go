@@ -146,5 +146,5 @@ func pom(ctx *fasthttp.RequestCtx, id, version string) error {
 	ctx.Response.Header.SetContentType("application/xml")
 	en := xml.NewEncoder(ctx.Response.BodyWriter())
 	en.Indent("", "  ")
-	return en.Encode(ore.NewPom(id, group, v.Name))
+	return en.Encode(ore.NewPom(group, id, v.Name))
 }
