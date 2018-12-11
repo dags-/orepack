@@ -23,7 +23,8 @@ const (
 )
 
 func main() {
-	port := flag.String("port", "8080", "server port")
+	port := flag.Int("port", 8080, "server port")
+	flag.Parse()
 
 	router := fasthttprouter.New()
 	router.GET(path, repoHandlerWrapper)
