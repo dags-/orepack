@@ -20,7 +20,8 @@ func main() {
 	port := flag.String("port", "8080", "server port")
 
 	router := fasthttprouter.New()
-	router.GET("/com/orepack/:id/:version/:file", handlerWrapper)
+	router.GET("/com/orepack/:id/:version/:file", repoHandler)
+	router.NotFound = notFoundHandler
 	server := fasthttp.Server{
 		Handler:            router.Handler,
 		GetOnly:            true,
@@ -47,11 +48,15 @@ func handleStop() {
 	}
 }
 
-func handlerWrapper(ctx *fasthttp.RequestCtx) {
+func notFoundHandler(ctx *fasthttp.RequestCtx) {
+	ctx.Redirect("https://ore.spongepowered.org", fasthttp.StatusPermanentRedirect)
+}
+
+func repoHandler(ctx *fasthttp.RequestCtx) {
 	defer ctx.SetConnectionClose()
 	e := handler(ctx)
 	if e != nil {
-		ctx.Response.Header.SetStatusCode(http.StatusBadRequest)
+		ctx.Response.Header.SetStatusCode(http.StatusNotFound)
 		fmt.Fprintln(ctx.Response.BodyWriter(), e)
 	}
 }
@@ -62,7 +67,6 @@ func handler(ctx *fasthttp.RequestCtx) error {
 	file := ctx.UserValue("file").(string)
 
 	if !strings.HasPrefix(file, id+"-"+version) {
-		ctx.Response.Header.SetStatusCode(http.StatusBadRequest)
 		return http.ErrNoLocation
 	}
 
