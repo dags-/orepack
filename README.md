@@ -4,7 +4,7 @@ Depend on Sponge Plugins hosted on https://ore.spongepowered.org
 ## Gradle
 ```gradle
 repositories {
-    maven { url 'http://orepack.com' }
+    maven { url 'https://orepack.com' }
 }
 
 dependencies {
@@ -17,7 +17,7 @@ dependencies {
 <repositories>
   <repository>
     <id>orepack</id>
-    <url>http://orepack.com</url>
+    <url>https://orepack.com</url>
   </repository>
 </repositories>
 
