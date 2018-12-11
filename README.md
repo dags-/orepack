@@ -1,5 +1,5 @@
 # orepack
-Plugin dependencies from https://ore.spongepowered.org
+Depend on Sponge Plugins hosted on https://ore.spongepowered.org
 
 ## Gradle
 ```gradle
