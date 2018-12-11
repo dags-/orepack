@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"strings"
 )
 
 var versions = `https://ore.spongepowered.org/api/v1/projects/%s/versions`
@@ -35,11 +34,6 @@ func GetVersion(id, version string) (*Version, error) {
 
 	if len(versions) == 0 {
 		return nil, fmt.Errorf("version not found: %s:%s", id, version)
-	}
-
-	if strings.ToUpper(version) == "LATEST" {
-		latest := &versions[0]
-		return latest, nil
 	}
 
 	for _, v := range versions {
