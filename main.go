@@ -6,6 +6,7 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -16,11 +17,16 @@ import (
 	"github.com/valyala/fasthttp"
 )
 
+const (
+	path  = "/com/orepack/:id/:version/:file"
+	group = "com.orepack"
+)
+
 func main() {
 	port := flag.String("port", "8080", "server port")
 
 	router := fasthttprouter.New()
-	router.GET("/com/orepack/:id/:version/:file", repoHandler)
+	router.GET(path, repoHandlerWrapper)
 	router.NotFound = notFoundHandler
 	server := fasthttp.Server{
 		Handler:            router.Handler,
@@ -32,6 +38,7 @@ func main() {
 
 	go handleStop()
 
+	log.Println("serving on port", *port)
 	e := server.ListenAndServe(fmt.Sprintf(":%v", *port))
 	if e != nil {
 		panic(e)
@@ -43,6 +50,7 @@ func handleStop() {
 	for s.Scan() {
 		cmd := strings.ToLower(strings.TrimSpace(s.Text()))
 		if cmd == "stop" {
+			log.Println("stopping")
 			os.Exit(0)
 		}
 	}
@@ -52,20 +60,18 @@ func notFoundHandler(ctx *fasthttp.RequestCtx) {
 	ctx.Redirect("https://ore.spongepowered.org", fasthttp.StatusPermanentRedirect)
 }
 
-func repoHandler(ctx *fasthttp.RequestCtx) {
-	defer ctx.SetConnectionClose()
-	e := handler(ctx)
+func repoHandlerWrapper(ctx *fasthttp.RequestCtx) {
+	id, version, file := value(ctx, "id"), value(ctx, "version"), value(ctx, "file")
+
+	e := repoHandler(id, version, file, ctx)
 	if e != nil {
 		ctx.Response.Header.SetStatusCode(http.StatusNotFound)
 		fmt.Fprintln(ctx.Response.BodyWriter(), e)
+		log.Printf("error (id:%s,version:%s,file:%s): %s\n", id, version, file, e.Error())
 	}
 }
 
-func handler(ctx *fasthttp.RequestCtx) error {
-	id := ctx.UserValue("id").(string)
-	version := ctx.UserValue("version").(string)
-	file := ctx.UserValue("file").(string)
-
+func repoHandler(id, version, file string, ctx *fasthttp.RequestCtx) error {
 	if !strings.HasPrefix(file, id+"-"+version) {
 		return http.ErrNoLocation
 	}
@@ -80,6 +86,13 @@ func handler(ctx *fasthttp.RequestCtx) error {
 	default:
 		return http.ErrNoLocation
 	}
+}
+
+func value(ctx *fasthttp.RequestCtx, name string) string {
+	if str, ok := ctx.UserValue(name).(string); ok {
+		return str
+	}
+	return ""
 }
 
 func jar(ctx *fasthttp.RequestCtx, id, version string) error {
@@ -108,5 +121,5 @@ func pom(ctx *fasthttp.RequestCtx, id, version string) error {
 	ctx.Response.Header.SetContentType("application/xml")
 	en := xml.NewEncoder(ctx.Response.BodyWriter())
 	en.Indent("", "  ")
-	return en.Encode(ore.NewPom(id, v))
+	return en.Encode(ore.NewPom(id, group, v.Name))
 }
