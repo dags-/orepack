@@ -5,7 +5,6 @@ import (
 	"encoding/xml"
 	"flag"
 	"fmt"
-	"io"
 	"log"
 	"net/http"
 	"os"
@@ -13,12 +12,9 @@ import (
 	"strings"
 
 	"github.com/buaazp/fasthttprouter"
-	"github.com/dags-/orepack/ore"
 	"github.com/valyala/fasthttp"
-)
 
-const (
-	group = "com.orepack"
+	"github.com/dags-/orepack/ore"
 )
 
 func main() {
@@ -26,13 +22,10 @@ func main() {
 	flag.Parse()
 
 	router := fasthttprouter.New()
-	router.NotFound = redirectHandler
-	router.GET("/com/orepack/:id", redirectHandler)
-	router.GET("/com/orepack/:id/:version", redirectHandler)
-	router.GET("/com/orepack/:id/:version/:file", repoHandlerWrapper)
+	router.GET("/com/orepack/:owner/:name/:version/:file", repoHandlerWrapper)
+
 	server := fasthttp.Server{
 		Handler:            router.Handler,
-		GetOnly:            true,
 		DisableKeepalive:   true,
 		MaxConnsPerIP:      10,
 		MaxRequestsPerConn: 10,
@@ -58,56 +51,32 @@ func handleStop() {
 	}
 }
 
-func redirectHandler(ctx *fasthttp.RequestCtx) {
-	var url string
-	var e error
-
-	id := value(ctx, "id")
-	version := value(ctx, "version")
-
-	if id == "" {
-		url = ore.HOME
-		e = nil
-	} else if version == "" {
-		url, e = ore.GetProjectPage(id)
-	} else {
-		url, e = ore.GetVersionPage(id, version)
-	}
-
-	if e != nil {
-		log.Printf("error (id:%s,version:%s): %s\n", id, version, e)
-	}
-
-	if url == "" {
-		url = ore.HOME
-	}
-
-	ctx.Redirect(url, fasthttp.StatusPermanentRedirect)
-}
-
 func repoHandlerWrapper(ctx *fasthttp.RequestCtx) {
-	id, version, file := value(ctx, "id"), value(ctx, "version"), value(ctx, "file")
-
-	e := repoHandler(id, version, file, ctx)
+	owner := value(ctx, "owner")
+	name := value(ctx, "name")
+	version := value(ctx, "version")
+	file := value(ctx, "file")
+	log.Println(owner, name, version, file)
+	e := repoHandler(owner, name, version, file, ctx)
 	if e != nil {
 		ctx.Response.Header.SetStatusCode(http.StatusNotFound)
 		fmt.Fprintln(ctx.Response.BodyWriter(), e)
-		log.Printf("error (id:%s,version:%s,file:%s): %s\n", id, version, file, e.Error())
+		log.Printf("error (id:%s,version:%s,file:%s): %s\n", name, version, file, e.Error())
 	}
 }
 
-func repoHandler(id, version, file string, ctx *fasthttp.RequestCtx) error {
+func repoHandler(owner, id, version, file string, ctx *fasthttp.RequestCtx) error {
 	if !strings.HasPrefix(file, id+"-"+version) {
 		return http.ErrNoLocation
 	}
 
 	switch filepath.Ext(file) {
 	case ".pom":
-		return pom(ctx, id, version)
+		return pom(ctx, owner, id, version)
 	case ".md5":
-		return md5(ctx, id, version)
+		return md5(ctx, owner, id, version)
 	case ".jar":
-		return jar(ctx, id, version)
+		return jar(ctx, owner, id, version)
 	default:
 		return http.ErrNoLocation
 	}
@@ -120,17 +89,25 @@ func value(ctx *fasthttp.RequestCtx, name string) string {
 	return ""
 }
 
-func jar(ctx *fasthttp.RequestCtx, id, version string) error {
-	j, e := ore.GetJar(id, version)
+func jar(ctx *fasthttp.RequestCtx, owner, name, version string) error {
+	p, e := ore.GetProject(owner, name)
 	if e != nil {
 		return e
 	}
-	_, e = io.Copy(ctx.Response.BodyWriter(), j)
+	url, e := ore.GetJarURL(p.ID, version)
+	if e != nil {
+		return e
+	}
+	ctx.Redirect(url, fasthttp.StatusOK)
 	return e
 }
 
-func md5(ctx *fasthttp.RequestCtx, id, version string) error {
-	v, e := ore.GetVersion(id, version)
+func md5(ctx *fasthttp.RequestCtx, owner, name, version string) error {
+	p, e := ore.GetProject(owner, name)
+	if e != nil {
+		return e
+	}
+	v, e := ore.GetVersion(p.ID, version)
 	if e != nil {
 		return e
 	}
@@ -138,13 +115,17 @@ func md5(ctx *fasthttp.RequestCtx, id, version string) error {
 	return e
 }
 
-func pom(ctx *fasthttp.RequestCtx, id, version string) error {
-	v, e := ore.GetVersion(id, version)
+func pom(ctx *fasthttp.RequestCtx, owner, name, version string) error {
+	p, e := ore.GetProject(owner, name)
+	if e != nil {
+		return e
+	}
+	v, e := ore.GetVersion(p.ID, version)
 	if e != nil {
 		return e
 	}
 	ctx.Response.Header.SetContentType("application/xml")
 	en := xml.NewEncoder(ctx.Response.BodyWriter())
 	en.Indent("", "  ")
-	return en.Encode(ore.NewPom(group, id, v.Name))
+	return en.Encode(ore.NewPom(owner, name, v.Name))
 }

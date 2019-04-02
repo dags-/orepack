@@ -13,14 +13,14 @@ type Pom struct {
 	Version      string   `xml:"version"`
 }
 
-func NewPom(group, id, version string) *Pom {
+func NewPom(owner, name, version string) *Pom {
 	return &Pom{
 		XMLNS:        "http://maven.apache.org/POM/4.0.0",
 		XMLNSXSI:     "http://www.w3.org/2001/XMLSchema-instance",
 		XSI:          "http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd",
 		ModelVersion: "4.0.0",
-		GroupID:      group,
-		ArtifactID:   id,
+		GroupID:      "com.orepack." + owner,
+		ArtifactID:   name,
 		Version:      version,
 	}
 }
