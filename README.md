@@ -8,7 +8,7 @@ repositories {
 }
 
 dependencies {
-    compile 'com.orepack:$PLUGIN_ID:$PLUGIN_VERSION'
+    compile 'com.orepack.$PLUGIN_AUTHOR:$PLUGIN_ID:$PLUGIN_VERSION'
 }
 ```
 
@@ -23,7 +23,7 @@ dependencies {
 
 <dependencies>
   <dependency>
-    <groupId>com.orepack</groupId>
+    <groupId>com.orepack.$PLUGIN_AUTHOR</groupId>
     <artifactId>$PLUGIN_ID</artifactId>
     <version>$PLUGIN_VERSION</version>
   </dependency>
