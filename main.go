@@ -27,6 +27,7 @@ func main() {
 	server := fasthttp.Server{
 		Handler:            router.Handler,
 		DisableKeepalive:   true,
+		GetOnly:            true,
 		MaxConnsPerIP:      10,
 		MaxRequestsPerConn: 10,
 	}
