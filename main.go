@@ -2,17 +2,21 @@ package main
 
 import (
 	"bufio"
+	"context"
 	"encoding/xml"
 	"flag"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/buaazp/fasthttprouter"
 	"github.com/valyala/fasthttp"
+	"golang.org/x/net/context/ctxhttp"
 
 	"github.com/dags-/orepack/ore"
 )
@@ -57,7 +61,6 @@ func repoHandlerWrapper(ctx *fasthttp.RequestCtx) {
 	name := value(ctx, "name")
 	version := value(ctx, "version")
 	file := value(ctx, "file")
-	log.Println(owner, name, version, file)
 	e := repoHandler(owner, name, version, file, ctx)
 	if e != nil {
 		ctx.Response.Header.SetStatusCode(http.StatusNotFound)
@@ -99,7 +102,13 @@ func jar(ctx *fasthttp.RequestCtx, owner, name, version string) error {
 	if e != nil {
 		return e
 	}
-	ctx.Redirect(url, fasthttp.StatusOK)
+	c, _ := context.WithTimeout(context.Background(), time.Second*30)
+	r, e := ctxhttp.Get(c, nil, url)
+	if e != nil {
+		return e
+	}
+	defer r.Body.Close()
+	_, e = io.Copy(ctx.Response.BodyWriter(), r.Body)
 	return e
 }
 
