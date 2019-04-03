@@ -16,18 +16,7 @@ type Version struct {
 }
 
 func GetVersion(id, version string) (*Version, error) {
-	r, e := http.Get(fmt.Sprintf(versions, id))
-	if e != nil {
-		return nil, e
-	}
-	defer r.Body.Close()
-
-	if r.StatusCode != 200 {
-		return nil, fmt.Errorf(r.Status)
-	}
-
-	var versions []Version
-	e = json.NewDecoder(r.Body).Decode(&versions)
+	versions, e := GetVersions(id)
 	if e != nil {
 		return nil, e
 	}
@@ -43,4 +32,23 @@ func GetVersion(id, version string) (*Version, error) {
 	}
 
 	return nil, fmt.Errorf("version not found: %s:%s", id, version)
+}
+
+func GetVersions(id string) ([]Version, error) {
+	r, e := http.Get(fmt.Sprintf(versions, id))
+	if e != nil {
+		return nil, e
+	}
+	defer r.Body.Close()
+
+	if r.StatusCode != 200 {
+		return nil, fmt.Errorf(r.Status)
+	}
+
+	var versions []Version
+	e = json.NewDecoder(r.Body).Decode(&versions)
+	if e != nil {
+		return nil, e
+	}
+	return versions, nil
 }

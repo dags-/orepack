@@ -1,6 +1,8 @@
 package ore
 
-import "encoding/xml"
+import (
+	"encoding/xml"
+)
 
 type Pom struct {
 	XMLName      xml.Name `xml:"project"`

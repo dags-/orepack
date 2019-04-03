@@ -2,10 +2,8 @@ package ore
 
 import (
 	"fmt"
+	"strings"
 )
-
-const HOME = "https://ore.spongepowered.org"
-const projects = "https://ore.spongepowered.org/api/v1/users/%s"
 
 type Project struct {
 	ID   string `json:"pluginId"`
@@ -18,8 +16,9 @@ func GetProject(owner string, name string) (*Project, error) {
 	if e != nil {
 		return nil, e
 	}
+	name = strings.ToLower(name)
 	for _, p := range o.Projects {
-		if p.ID == name || p.Name == name {
+		if p.ID == name || strings.ToLower(p.Name) == name {
 			return &p, nil
 		}
 	}

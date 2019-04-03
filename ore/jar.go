@@ -3,38 +3,45 @@ package ore
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 )
 
 type Message struct {
-	URL string `json:"url"`
+	URL string `json:"post"`
 }
 
 var download = `https://ore.spongepowered.org/api/projects/%s/versions/%s/download`
 
-func GetJarURL(id, version string) (string, error) {
+func GetJar(id, version string) (io.ReadCloser, error) {
 	url := fmt.Sprintf(download, id, version)
 	r, e := http.Get(url)
 	if e != nil {
-		return "", e
+		return nil, e
 	}
-	defer r.Body.Close()
 
 	content := r.Header.Get("Content-Type")
 	if content == "application/octet-stream" {
-		return url, nil
+		return r.Body, nil
 	}
+
+	defer r.Body.Close()
 
 	if content == "application/json" {
 		var message Message
 
 		e = json.NewDecoder(r.Body).Decode(&message)
 		if e != nil {
-			return "", e
+			return nil, e
 		}
 
-		return message.URL, nil
+		p, e := http.Post(message.URL, "application/json", nil)
+		if e != nil {
+			return nil, e
+		}
+
+		return p.Body, nil
 	}
 
-	return "", fmt.Errorf("jar not found: %s:%s", id, version)
+	return nil, fmt.Errorf("jar not found: %s:%s", id, version)
 }

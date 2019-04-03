@@ -2,7 +2,6 @@ package main
 
 import (
 	"bufio"
-	"context"
 	"encoding/xml"
 	"flag"
 	"fmt"
@@ -12,11 +11,9 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"time"
 
 	"github.com/buaazp/fasthttprouter"
 	"github.com/valyala/fasthttp"
-	"golang.org/x/net/context/ctxhttp"
 
 	"github.com/dags-/orepack/ore"
 )
@@ -26,7 +23,7 @@ func main() {
 	flag.Parse()
 
 	router := fasthttprouter.New()
-	router.GET("/com/orepack/:owner/:name/:version/:file", repoHandlerWrapper)
+	router.GET("/com/orepack/:owner/:project/:version/:file", repoHandlerWrapper)
 
 	server := fasthttp.Server{
 		Handler:            router.Handler,
@@ -58,14 +55,14 @@ func handleStop() {
 
 func repoHandlerWrapper(ctx *fasthttp.RequestCtx) {
 	owner := value(ctx, "owner")
-	name := value(ctx, "name")
+	project := value(ctx, "project")
 	version := value(ctx, "version")
 	file := value(ctx, "file")
-	e := repoHandler(owner, name, version, file, ctx)
+	e := repoHandler(owner, project, version, file, ctx)
 	if e != nil {
 		ctx.Response.Header.SetStatusCode(http.StatusNotFound)
 		fmt.Fprintln(ctx.Response.BodyWriter(), e)
-		log.Printf("error (id:%s,version:%s,file:%s): %s\n", name, version, file, e.Error())
+		log.Printf("error (id:%s,version:%s,file:%s): %s\n", project, version, file, e.Error())
 	}
 }
 
@@ -93,27 +90,22 @@ func value(ctx *fasthttp.RequestCtx, name string) string {
 	return ""
 }
 
-func jar(ctx *fasthttp.RequestCtx, owner, name, version string) error {
-	p, e := ore.GetProject(owner, name)
+func jar(ctx *fasthttp.RequestCtx, owner, project, version string) error {
+	p, e := ore.GetProject(owner, project)
 	if e != nil {
 		return e
 	}
-	url, e := ore.GetJarURL(p.ID, version)
+	r, e := ore.GetJar(p.ID, version)
 	if e != nil {
 		return e
 	}
-	c, _ := context.WithTimeout(context.Background(), time.Second*30)
-	r, e := ctxhttp.Get(c, nil, url)
-	if e != nil {
-		return e
-	}
-	defer r.Body.Close()
-	_, e = io.Copy(ctx.Response.BodyWriter(), r.Body)
+	defer r.Close()
+	_, e = io.Copy(ctx.Response.BodyWriter(), r)
 	return e
 }
 
-func md5(ctx *fasthttp.RequestCtx, owner, name, version string) error {
-	p, e := ore.GetProject(owner, name)
+func md5(ctx *fasthttp.RequestCtx, owner, project, version string) error {
+	p, e := ore.GetProject(owner, project)
 	if e != nil {
 		return e
 	}
@@ -125,8 +117,8 @@ func md5(ctx *fasthttp.RequestCtx, owner, name, version string) error {
 	return e
 }
 
-func pom(ctx *fasthttp.RequestCtx, owner, name, version string) error {
-	p, e := ore.GetProject(owner, name)
+func pom(ctx *fasthttp.RequestCtx, owner, project, version string) error {
+	p, e := ore.GetProject(owner, project)
 	if e != nil {
 		return e
 	}
@@ -137,5 +129,5 @@ func pom(ctx *fasthttp.RequestCtx, owner, name, version string) error {
 	ctx.Response.Header.SetContentType("application/xml")
 	en := xml.NewEncoder(ctx.Response.BodyWriter())
 	en.Indent("", "  ")
-	return en.Encode(ore.NewPom(owner, name, v.Name))
+	return en.Encode(ore.NewPom(owner, project, v.Name))
 }
