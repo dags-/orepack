@@ -78,6 +78,8 @@ func repoHandler(owner, id, version, file string, ctx *fasthttp.RequestCtx) erro
 		return md5(ctx, owner, id, version)
 	case ".jar":
 		return jar(ctx, owner, id, version)
+	case ".sha1":
+		return nil
 	default:
 		return http.ErrNoLocation
 	}
