@@ -1,14 +1,12 @@
 package main
 
 import (
-	"bufio"
 	"encoding/xml"
 	"flag"
 	"fmt"
 	"io"
 	"log"
 	"net/http"
-	"os"
 	"path/filepath"
 	"strings"
 
@@ -33,23 +31,10 @@ func main() {
 		MaxRequestsPerConn: 10,
 	}
 
-	go handleStop()
-
 	log.Println("serving on port", *port)
 	e := server.ListenAndServe(fmt.Sprintf(":%v", *port))
 	if e != nil {
 		panic(e)
-	}
-}
-
-func handleStop() {
-	s := bufio.NewScanner(os.Stdin)
-	for s.Scan() {
-		cmd := strings.ToLower(strings.TrimSpace(s.Text()))
-		if cmd == "stop" {
-			log.Println("stopping")
-			os.Exit(0)
-		}
 	}
 }
 
