@@ -1,0 +1,131 @@
+body {
+    padding: 0;
+    margin: 0;
+    position: relative;
+    background-color: #dadada;
+    font-family: 'Roboto', sans-serif;
+}
+
+header {
+    position: relative;
+    width: 100%;
+    height: 200px;
+    color: #ffffff;
+    background-color: #333333;
+    font-size: 4em;
+}
+
+footer {
+    position: relative;
+    width: 100%;
+    padding: 3em 0;
+    color: #ffffff;
+    background-color: #333333;
+    text-align: center;
+}
+
+.title-text {
+    position: absolute;
+    display: inline;
+    width: 100%;
+    text-align: center;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.inputs {
+    display: flex;
+    align-items: center;
+    width: 75%;
+    height: 100%;
+    margin: auto;
+    font-size: 0.25em;
+    transform: translateY(50%);
+}
+
+.inputs input:first-child {
+    flex-grow: 2;
+    width: 100%;
+    padding-left: 1em !important;
+    padding-right: 0.25em !important;
+    border-radius: 1em 0 0 1em;
+}
+
+.inputs input:last-child {
+    flex-grow: 1;
+    width: 25% !important;
+    border-radius: 0 1em 1em 0;
+    background-color: mediumseagreen;
+    color: #ffffff;
+}
+
+.inputs input {
+    border: none;
+    height: 3em;
+    font-size: 1em;
+    box-shadow: 0 0 1px 0 rgba(0, 0, 0, 0.2);
+}
+
+.inputs input:focus {
+    outline: none;
+}
+
+.inputs input[type="button"]:active {
+    box-shadow: 0 0 5px 0 rgba(0, 0, 0, 0.25) inset;
+}
+
+.content {
+    min-height: calc(100vh - 192px);
+    padding: 3em 0;
+}
+
+.project {
+    width: 75%;
+    margin: auto auto;
+    background-color: #ffffff;
+}
+
+.project div {
+    padding: 1em;
+    box-sizing: border-box;
+}
+
+.project-title {
+    font-size: 2em;
+    width: 100%;
+    color: #ffffff;
+    background-color: #555555;
+}
+
+.project table {
+    width: 100%;
+    text-align: center;
+    border-collapse: collapse;
+}
+
+.project th {
+    background-color: mediumseagreen;
+    color: #ffffff;
+}
+
+.project tr {
+    background-color: #ffffff;
+}
+
+.project tr:nth-child(odd) {
+    background-color: #fafafa;
+}
+
+.project pre {
+    margin: 0;
+    padding: 1em;
+    background-color: #fafafa;
+}
+
+.project code {
+    display: block;
+    white-space: pre-wrap;
+    line-break: normal;
+    user-select: all;
+    cursor: pointer;
+}
