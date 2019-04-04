@@ -11,7 +11,7 @@ import (
 	"strings"
 
 	"github.com/valyala/fasthttp"
-	routing "gopkg.in/jackwhelpton/fasthttp-routing.v2"
+	"gopkg.in/jackwhelpton/fasthttp-routing.v2"
 	"gopkg.in/jackwhelpton/fasthttp-routing.v2/file"
 
 	"github.com/dags-/orepack/ore"
