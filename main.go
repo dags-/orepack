@@ -10,21 +10,26 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/buaazp/fasthttprouter"
+	"github.com/jackwhelpton/fasthttp-routing"
+	"github.com/jackwhelpton/fasthttp-routing/file"
 	"github.com/valyala/fasthttp"
 
 	"github.com/dags-/orepack/ore"
 )
 
 func main() {
-	port := flag.Int("port", 8080, "server port")
+	port := flag.Int("port", 8082, "server port")
 	flag.Parse()
 
-	router := fasthttprouter.New()
-	router.GET("/com/orepack/:owner/:project/:version/:file", repoHandlerWrapper)
+	router := routing.New()
+	router.Get("/", file.Content("assets/index.html"))
+	router.Get("/index.html", file.Content("assets/index.html"))
+	router.Get("/script.js", file.Content("assets/script.js"))
+	router.Get("/style.css", file.Content("assets/style.css"))
+	router.Get("/com/orepack/<owner>/<project>/<version>/<filename>", repoHandlerWrapper)
 
 	server := fasthttp.Server{
-		Handler:            router.Handler,
+		Handler:            router.HandleRequest,
 		DisableKeepalive:   true,
 		GetOnly:            true,
 		MaxConnsPerIP:      10,
@@ -38,31 +43,23 @@ func main() {
 	}
 }
 
-func repoHandlerWrapper(ctx *fasthttp.RequestCtx) {
-	owner := value(ctx, "owner")
-	project := value(ctx, "project")
-	version := value(ctx, "version")
-	file := value(ctx, "file")
-	e := repoHandler(owner, project, version, file, ctx)
-	if e != nil {
-		ctx.Response.Header.SetStatusCode(http.StatusNotFound)
-		fmt.Fprintln(ctx.Response.BodyWriter(), e)
-		log.Printf("error (id:%s,version:%s,file:%s): %s\n", project, version, file, e.Error())
-	}
-}
+func repoHandlerWrapper(ctx *routing.Context) error {
+	owner := ctx.Param("owner")
+	project := ctx.Param("project")
+	version := ctx.Param("version")
+	filename := ctx.Param("filename")
 
-func repoHandler(owner, id, version, file string, ctx *fasthttp.RequestCtx) error {
-	if !strings.HasPrefix(file, id+"-"+version) {
+	if !strings.HasPrefix(filename, project+"-"+version) {
 		return http.ErrNoLocation
 	}
 
-	switch filepath.Ext(file) {
+	switch filepath.Ext(filename) {
 	case ".pom":
-		return pom(ctx, owner, id, version)
+		return pom(ctx, owner, project, version)
 	case ".md5":
-		return md5(ctx, owner, id, version)
+		return md5(ctx, owner, project, version)
 	case ".jar":
-		return jar(ctx, owner, id, version)
+		return jar(ctx, owner, project, version)
 	case ".sha1":
 		return nil
 	default:
@@ -70,14 +67,7 @@ func repoHandler(owner, id, version, file string, ctx *fasthttp.RequestCtx) erro
 	}
 }
 
-func value(ctx *fasthttp.RequestCtx, name string) string {
-	if str, ok := ctx.UserValue(name).(string); ok {
-		return str
-	}
-	return ""
-}
-
-func jar(ctx *fasthttp.RequestCtx, owner, project, version string) error {
+func jar(ctx *routing.Context, owner, project, version string) error {
 	p, e := ore.GetProject(owner, project)
 	if e != nil {
 		return e
@@ -91,7 +81,7 @@ func jar(ctx *fasthttp.RequestCtx, owner, project, version string) error {
 	return e
 }
 
-func md5(ctx *fasthttp.RequestCtx, owner, project, version string) error {
+func md5(ctx *routing.Context, owner, project, version string) error {
 	p, e := ore.GetProject(owner, project)
 	if e != nil {
 		return e
@@ -104,7 +94,7 @@ func md5(ctx *fasthttp.RequestCtx, owner, project, version string) error {
 	return e
 }
 
-func pom(ctx *fasthttp.RequestCtx, owner, project, version string) error {
+func pom(ctx *routing.Context, owner, project, version string) error {
 	p, e := ore.GetProject(owner, project)
 	if e != nil {
 		return e

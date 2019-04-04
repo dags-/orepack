@@ -116,6 +116,10 @@ footer {
     background-color: #fafafa;
 }
 
+.project td {
+    padding: 0.4em 0;
+}
+
 .project pre {
     margin: 0;
     padding: 1em;

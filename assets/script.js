@@ -109,7 +109,7 @@ function renderVersions(owner, project, versions) {
 function renderVersion(owner, version) {
     let ver = `<td>${version["name"]}</td>`;
     let spn = `<td>${getSpongeDep(version)}</td>`;
-    let get = `<td onclick="setVersion('${owner}','${version["pluginId"]}','${version["name"]}')"><a href="#">Get</a></td>`;
+    let get = `<td onclick="setVersion('${owner}','${version["pluginId"]}','${version["name"]}')"><a href="#gradle">Get</a></td>`;
     return render(ver + spn + get, "table").firstChild.firstChild;
 }
 
