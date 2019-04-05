@@ -27,6 +27,18 @@ function splitPath(path) {
     return path.split("/");
 }
 
+function setLoading(loading) {
+    let content = document.getElementById("content");
+    if (loading) {
+        let project = document.getElementById("project");
+        content.insertBefore(render(renderLoader()).firstChild, content.firstChild);
+        clear(project);
+    } else {
+        let loader = document.getElementById("loader");
+        content.removeChild(loader);
+    }
+}
+
 function find() {
     let root = document.getElementById("project");
     let input = document.getElementById("search").value;
@@ -35,8 +47,7 @@ function find() {
         return;
     }
 
-    clear(root);
-    root.innerText = "Loading...";
+    setLoading(true);
 
     let owner = parts[0];
     let name = parts[1];
@@ -44,12 +55,13 @@ function find() {
         .then(getVersions)
         .then(versions => {
             let project = renderProject(owner, name, versions);
-            clear(root);
             for (let i = 0; i < project.length; i++) {
                 root.appendChild(project[i]);
             }
             document.getElementById("search").scrollIntoView({behavior: "smooth"});
-        });
+        })
+        .catch(() => root.innerHTML = renderDescription())
+        .finally(() => setLoading(false));
 }
 
 function setVersion(owner, id, version) {
@@ -109,14 +121,14 @@ function renderVersions(owner, project, versions) {
 function renderVersion(owner, version) {
     let ver = `<td>${version["name"]}</td>`;
     let spn = `<td>${getSpongeDep(version)}</td>`;
-    let get = `<td onclick="setVersion('${owner}','${version["pluginId"]}','${version["name"]}')"><a href="#gradle">Get</a></td>`;
+    let get = `<td onclick="setVersion('${owner}','${version["pluginId"]}','${version["name"]}')"><a href="#dependency">Get</a></td>`;
     return render(ver + spn + get, "table").firstChild.firstChild;
 }
 
 function renderGradleDependency(owner, pluginId, version) {
     let root = render(`<div class="project-dependency">Gradle:</div>`).firstChild;
     let pre = render(`<pre></pre>`).firstChild;
-    let code = render(`<code id="gradle"></code>`).firstChild;
+    let code = render(`<code id="dependency"></code>`).firstChild;
     code.innerText = renderGradle(owner, pluginId, version);
     pre.appendChild(code);
     root.appendChild(pre);
@@ -126,7 +138,7 @@ function renderGradleDependency(owner, pluginId, version) {
 function renderMavenDependency(owner, pluginId, version) {
     let root = render(`<div class="project-dependency">Maven:</div>`).firstChild;
     let pre = render(`<pre></pre>`).firstChild;
-    let code = render(`<code id="maven"></code>`).firstChild;
+    let code = render(`<code></code>`).firstChild;
     code.innerText = renderMaven(owner, pluginId, version);
     pre.appendChild(code);
     root.appendChild(pre);
@@ -162,4 +174,17 @@ function renderMaven(owner, pluginId, version) {
   </dependency>
 </dependencies>
 `.trim();
+}
+
+function renderLoader() {
+    return `<div class="loader" id="loader"></div>`;
+}
+
+function renderDescription() {
+    return `<div class="project-title">Hello world</div>
+        <div>Depend on Sponge plugins hosted on <a href="https://ore.spongepowered.org" target="_blank">Ore</a></div>
+        <div>Repository: <code>https://orepack.com</code></div>
+        <div>GroupId: <code>com.orepack.$PluginAuthor</code></div>
+        <div>ArtifactId: <code>$PluginId</code></div>
+        <div>Version: <code>$PluginVersion</code></div>`;
 }

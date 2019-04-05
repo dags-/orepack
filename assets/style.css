@@ -24,6 +24,16 @@ footer {
     text-align: center;
 }
 
+footer a {
+    opacity: 0.5;
+    color: #ffffff;
+    text-decoration: none;
+}
+
+footer a:hover {
+    opacity: 0.75;
+}
+
 .title-text {
     position: absolute;
     display: inline;
@@ -71,7 +81,7 @@ footer {
 }
 
 .inputs input[type="button"]:active {
-    box-shadow: 0 0 5px 0 rgba(0, 0, 0, 0.25) inset;
+    box-shadow: 0 0 25px 0 rgba(255, 255, 255, 0.5) inset;
 }
 
 .content {
@@ -132,4 +142,25 @@ footer {
     line-break: normal;
     user-select: all;
     cursor: pointer;
+}
+
+.loader {
+    border: 16px solid #f3f3f3; /* Light grey */
+    border-top: 16px solid mediumseagreen; /* Blue */
+    border-radius: 50%;
+    width: 120px;
+    height: 120px;
+    animation: spin 2s linear infinite;
+    margin: 50px auto;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+@media (max-width: 60em) {
+    .inputs, .project {
+        width: 98%;
+    }
 }
