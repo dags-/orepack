@@ -99,7 +99,7 @@ function renderTitle(owner, project) {
 
 function renderVersions(owner, project, versions) {
     let root = render(`<div class="project-versions">Versions:</div>`).firstChild;
-    let table = render(`<table><tr><th>Plugin Version</th><th>Sponge API</th><th>Get</th></tr></table>`).firstChild;
+    let table = render(`<table><tr><th>Plugin Version</th><th>Sponge API</th><th>Build</th></tr></table>`).firstChild;
     let tbody = table.firstChild;
     versions.forEach(version => tbody.appendChild(renderVersion(owner, version)));
     root.appendChild(table);
