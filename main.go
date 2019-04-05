@@ -26,6 +26,7 @@ func main() {
 	router.Get("/index.html", file.Content("assets/index.html"))
 	router.Get("/script.js", file.Content("assets/script.js"))
 	router.Get("/style.css", file.Content("assets/style.css"))
+	router.Get("/favicon.ico", file.Content("assets/favicon.ico"))
 	router.Get("/com/orepack/<owner>/<project>/<version>/<filename>", repoHandlerWrapper)
 
 	server := fasthttp.Server{
