@@ -3,7 +3,6 @@ package ore
 import (
 	"encoding/json"
 	"fmt"
-	"net/http"
 )
 
 var versions = `https://ore.spongepowered.org/api/v1/projects/%s/versions`
@@ -35,7 +34,8 @@ func GetVersion(id, version string) (*Version, error) {
 }
 
 func GetVersions(id string) ([]Version, error) {
-	r, e := http.Get(fmt.Sprintf(versions, id))
+	url := fmt.Sprintf(versions, id)
+	r, e := HttpGet(url)
 	if e != nil {
 		return nil, e
 	}

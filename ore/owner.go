@@ -3,7 +3,6 @@ package ore
 import (
 	"encoding/json"
 	"fmt"
-	"net/http"
 	"strings"
 )
 
@@ -15,7 +14,7 @@ type Owner struct {
 
 func GetOwner(owner string) (*Owner, error) {
 	url := fmt.Sprintf(owners, strings.ToLower(owner))
-	r, e := http.Get(url)
+	r, e := HttpGet(url)
 	if e != nil {
 		return nil, e
 	}

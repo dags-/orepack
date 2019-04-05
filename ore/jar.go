@@ -15,7 +15,7 @@ var download = `https://ore.spongepowered.org/api/projects/%s/versions/%s/downlo
 
 func GetJar(id, version string) (io.ReadCloser, error) {
 	url := fmt.Sprintf(download, id, version)
-	r, e := http.Get(url)
+	r, e := HttpGet(url)
 	if e != nil {
 		return nil, e
 	}

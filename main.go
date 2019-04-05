@@ -50,7 +50,7 @@ func repoHandlerWrapper(ctx *routing.Context) error {
 	filename := ctx.Param("filename")
 
 	if !strings.HasPrefix(filename, project+"-"+version) {
-		return http.ErrNoLocation
+		return http.ErrNotSupported
 	}
 
 	switch filepath.Ext(filename) {
@@ -63,7 +63,7 @@ func repoHandlerWrapper(ctx *routing.Context) error {
 	case ".sha1":
 		return nil
 	default:
-		return http.ErrNoLocation
+		return http.ErrNotSupported
 	}
 }
 
