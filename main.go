@@ -32,8 +32,8 @@ func main() {
 		Handler:            router.HandleRequest,
 		DisableKeepalive:   true,
 		GetOnly:            true,
-		MaxConnsPerIP:      10,
-		MaxRequestsPerConn: 10,
+		MaxConnsPerIP:      5,
+		MaxRequestsPerConn: 5,
 	}
 
 	log.Println("serving on port", *port)
