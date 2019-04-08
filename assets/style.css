@@ -130,6 +130,12 @@ footer a:hover {
     padding: 0.4em 0;
 }
 
+.project td a {
+    color: royalblue;
+    cursor: pointer;
+    user-select: none;
+}
+
 .project pre {
     margin: 0;
     padding: 1em;

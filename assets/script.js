@@ -1,3 +1,12 @@
+window.addEventListener("load", function() {
+    let hash = window.location.hash;
+    if (hash === "") {
+        return;
+    }
+    document.getElementById("search").value = hash.substring(1);
+    find();
+});
+
 function get(url) {
     return fetch(`https://cors-anywhere.herokuapp.com/${url}`).catch(console.error);
 }
@@ -39,28 +48,35 @@ function setLoading(loading) {
     }
 }
 
+function goTo(id) {
+    document.getElementById(id).scrollIntoView({behavior: "smooth"});
+}
+
 function find() {
-    let root = document.getElementById("project");
     let input = document.getElementById("search").value;
     let parts = splitPath(input);
     if (parts.length < 2) {
         return;
     }
 
-    setLoading(true);
-
     let owner = parts[0];
     let name = parts[1];
+    let root = document.getElementById("project");
+    setLoading(true);
+
     getPluginId(owner, name)
         .then(getVersions)
         .then(versions => {
+            window.location.href = `#${owner}/${name}`;
             let project = renderProject(owner, name, versions);
             for (let i = 0; i < project.length; i++) {
                 root.appendChild(project[i]);
             }
-            document.getElementById("search").scrollIntoView({behavior: "smooth"});
+            goTo("search");
         })
-        .catch(() => root.innerHTML = renderDescription())
+        .catch(() => {
+            root.innerHTML = renderDescription()
+        })
         .finally(() => setLoading(false));
 }
 
@@ -121,14 +137,14 @@ function renderVersions(owner, project, versions) {
 function renderVersion(owner, version) {
     let ver = `<td>${version["name"]}</td>`;
     let spn = `<td>${getSpongeDep(version)}</td>`;
-    let get = `<td onclick="setVersion('${owner}','${version["pluginId"]}','${version["name"]}')"><a href="#dependency">Get</a></td>`;
+    let get = `<td onclick="setVersion('${owner}','${version["pluginId"]}','${version["name"]}')"><a onclick="goTo('get')">Get</a></td>`;
     return render(ver + spn + get, "table").firstChild.firstChild;
 }
 
 function renderGradleDependency(owner, pluginId, version) {
     let root = render(`<div class="project-dependency">Gradle:</div>`).firstChild;
     let pre = render(`<pre></pre>`).firstChild;
-    let code = render(`<code id="dependency"></code>`).firstChild;
+    let code = render(`<code id="get"></code>`).firstChild;
     code.innerText = renderGradle(owner, pluginId, version);
     pre.appendChild(code);
     root.appendChild(pre);
