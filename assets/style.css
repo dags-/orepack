@@ -136,6 +136,10 @@ footer a:hover {
     user-select: none;
 }
 
+.project td a:hover {
+    opacity: 0.7;
+}
+
 .project pre {
     margin: 0;
     padding: 1em;
