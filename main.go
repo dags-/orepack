@@ -8,7 +8,6 @@ import (
 	"log"
 	"net/http"
 	"path/filepath"
-	"strings"
 
 	"github.com/jackwhelpton/fasthttp-routing"
 	"github.com/jackwhelpton/fasthttp-routing/file"
@@ -18,7 +17,7 @@ import (
 )
 
 func main() {
-	port := flag.Int("port", 8082, "server port")
+	port := flag.Int("port", 8080, "server port")
 	flag.Parse()
 
 	router := routing.New()
@@ -30,9 +29,9 @@ func main() {
 	router.Get("/com/orepack/<owner>/<project>/<version>/<filename>", repoHandlerWrapper)
 
 	server := fasthttp.Server{
-		Handler:            router.HandleRequest,
-		DisableKeepalive:   true,
-		GetOnly:            true,
+		Handler:          router.HandleRequest,
+		DisableKeepalive: true,
+		//GetOnly:            true,
 		MaxConnsPerIP:      5,
 		MaxRequestsPerConn: 5,
 	}
@@ -50,8 +49,8 @@ func repoHandlerWrapper(ctx *routing.Context) error {
 	version := ctx.Param("version")
 	filename := ctx.Param("filename")
 
-	if !strings.HasPrefix(filename, project+"-"+version) {
-		return http.ErrNotSupported
+	if filename == "maven-metadata.xml" {
+		return meta(ctx, owner, project, version)
 	}
 
 	switch filepath.Ext(filename) {
@@ -108,4 +107,19 @@ func pom(ctx *routing.Context, owner, project, version string) error {
 	en := xml.NewEncoder(ctx.Response.BodyWriter())
 	en.Indent("", "  ")
 	return en.Encode(ore.NewPom(owner, project, v.Name))
+}
+
+func meta(ctx *routing.Context, owner, project, version string) error {
+	p, e := ore.GetProject(owner, project)
+	if e != nil {
+		return e
+	}
+	v, e := ore.GetVersion(p.ID, version)
+	if e != nil {
+		return e
+	}
+	ctx.Response.Header.SetContentType("application/xml")
+	en := xml.NewEncoder(ctx.Response.BodyWriter())
+	en.Indent("", "  ")
+	return en.Encode(ore.NewMetaData(owner, project, v.Name))
 }
