@@ -3,9 +3,19 @@ window.addEventListener("load", function() {
     if (hash === "") {
         return;
     }
-    document.getElementById("search").value = hash.substring(1);
-    find();
+    let finder = document.getElementById("find");
+    finder.value = hash.substring(1);
+    finder.addEventListener("keyup", function(event) {
+        if (event.which === 13 || event.keyCode === 13) {
+            event.preventDefault();
+            find(0);
+        }
+    });
+    find(0);
 });
+
+let offset = 0;
+let next = false;
 
 function get(url) {
     return fetch(`https://cors-anywhere.herokuapp.com/${url}`).catch(console.error);
@@ -52,11 +62,15 @@ function goTo(id) {
     document.getElementById(id).scrollIntoView({behavior: "smooth"});
 }
 
-function find() {
-    let input = document.getElementById("search").value;
+function find(newOffset) {
+    let input = document.getElementById("find").value;
     let parts = splitPath(input);
     if (parts.length < 2) {
         return;
+    }
+
+    if (newOffset) {
+        offset = newOffset;
     }
 
     let owner = parts[0];
@@ -65,14 +79,15 @@ function find() {
     setLoading(true);
 
     getPluginId(owner, name)
-        .then(getVersions)
+        .then(project => getVersions(project, offset))
         .then(versions => {
+            next = versions.length === 10;
             window.location.href = `#${owner}/${name}`;
             let project = renderProject(owner, name, versions);
             for (let i = 0; i < project.length; i++) {
                 root.appendChild(project[i]);
             }
-            goTo("search");
+            goTo("find");
         })
         .catch(() => {
             root.innerHTML = renderDescription()
@@ -90,17 +105,20 @@ function setVersion(owner, id, version) {
     if (maven) {
         maven.innerText = renderMaven(owner, id, version);
     }
+
+    goTo("get");
 }
 
 function getPluginId(owner, project) {
     return get(`https://ore.spongepowered.org/api/v1/users/${owner}`)
         .then(r => r.json())
-        .then(user => user["projects"].find(p => p["name"] === project))
+        .then(user => user["projects"].find(p => p["name"] === project || p["pluginId"] === project))
         .then(proj => proj["pluginId"]);
 }
 
-function getVersions(project) {
-    return get(`https://ore.spongepowered.org/api/v1/projects/${project}/versions`)
+function getVersions(project, offset) {
+    offset = offset ? offset : 0;
+    return get(`https://ore.spongepowered.org/api/v1/projects/${project}/versions?offset=${offset}`)
         .then(r => r.json());
 }
 
@@ -125,11 +143,31 @@ function renderTitle(owner, project) {
    return render(`<div class="project-title">${owner}/${project}</div>`).firstChild;
 }
 
+function navPrev() {
+    if (offset > 0) {
+        offset -= 10;
+        find();
+    }
+}
+
+function navNext() {
+    if (next) {
+        offset += 10;
+        find();
+    }
+}
+
+function renderVersionNav() {
+    return `<div class="versions-nav"><a onclick="navPrev()">&lt</a><a onclick="navNext()">&gt</a></div>`;
+}
+
 function renderVersions(owner, project, versions) {
-    let root = render(`<div class="project-versions">Versions:</div>`).firstChild;
+    let root = render(`<div class="project-versions"></div>`).firstChild;
+    let head = render(`<div class="project-heading">Versions:${renderVersionNav()}</div>`).firstChild;
     let table = render(`<table><tr><th>Plugin Version</th><th>Sponge API</th><th>Build</th></tr></table>`).firstChild;
     let tbody = table.firstChild;
     versions.forEach(version => tbody.appendChild(renderVersion(owner, version)));
+    root.appendChild(head);
     root.appendChild(table);
     return root;
 }
@@ -137,14 +175,14 @@ function renderVersions(owner, project, versions) {
 function renderVersion(owner, version) {
     let ver = `<td>${version["name"]}</td>`;
     let spn = `<td>${getSpongeDep(version)}</td>`;
-    let get = `<td onclick="setVersion('${owner}','${version["pluginId"]}','${version["name"]}')"><a onclick="goTo('get')">Get</a></td>`;
+    let get = `<td><a onclick="setVersion('${owner}','${version["pluginId"]}','${version["name"]}')">Get</a></td>`;
     return render(ver + spn + get, "table").firstChild.firstChild;
 }
 
 function renderGradleDependency(owner, pluginId, version) {
-    let root = render(`<div class="project-dependency">Gradle:</div>`).firstChild;
+    let root = render(`<div id="get" class="project-dependency">Gradle:</div>`).firstChild;
     let pre = render(`<pre></pre>`).firstChild;
-    let code = render(`<code id="get"></code>`).firstChild;
+    let code = render(`<code id="gradle"></code>`).firstChild;
     code.innerText = renderGradle(owner, pluginId, version);
     pre.appendChild(code);
     root.appendChild(pre);
@@ -154,7 +192,7 @@ function renderGradleDependency(owner, pluginId, version) {
 function renderMavenDependency(owner, pluginId, version) {
     let root = render(`<div class="project-dependency">Maven:</div>`).firstChild;
     let pre = render(`<pre></pre>`).firstChild;
-    let code = render(`<code></code>`).firstChild;
+    let code = render(`<code id="maven"></code>`).firstChild;
     code.innerText = renderMaven(owner, pluginId, version);
     pre.appendChild(code);
     root.appendChild(pre);
