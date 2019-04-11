@@ -23,6 +23,7 @@ func main() {
 
 	router := routing.New()
 	router.Get("/", file.Content("assets/index.html"))
+	router.Get("/badge", file.Content("assets/badge.svg"))
 	router.Get("/index.html", file.Content("assets/index.html"))
 	router.Get("/script.js", file.Content("assets/script.js"))
 	router.Get("/style.css", file.Content("assets/style.css"))

@@ -16,6 +16,7 @@ window.addEventListener("load", function() {
 
 let offset = 0;
 let next = false;
+let busy = false;
 
 function get(url) {
     return fetch(`https://cors-anywhere.herokuapp.com/${url}`).catch(console.error);
@@ -63,6 +64,10 @@ function goTo(id) {
 }
 
 function find(newOffset) {
+    if (busy) {
+        return;
+    }
+
     let input = document.getElementById("find").value;
     let parts = splitPath(input);
     if (parts.length < 2) {
@@ -76,11 +81,13 @@ function find(newOffset) {
     let owner = parts[0];
     let name = parts[1];
     let root = document.getElementById("project");
+    busy = true;
     setLoading(true);
 
     getPluginId(owner, name)
         .then(project => getVersions(project, offset))
         .then(versions => {
+            clear(root);
             next = versions.length === 10;
             window.location.href = `#${owner}/${name}`;
             let project = renderProject(owner, name, versions);
@@ -92,7 +99,10 @@ function find(newOffset) {
         .catch(() => {
             root.innerHTML = renderDescription()
         })
-        .finally(() => setLoading(false));
+        .finally(() => {
+            setLoading(false);
+            busy = false;
+        });
 }
 
 function setVersion(owner, id, version) {
@@ -134,6 +144,7 @@ function renderProject(owner, project, versions) {
     let children = [];
     children.push(renderTitle(owner, project));
     children.push(renderVersions(owner, project, versions));
+    children.push(renderBadge());
     children.push(renderGradleDependency(owner, versions[0]["pluginId"], versions[0]["name"]));
     children.push(renderMavenDependency(owner, versions[0]["pluginId"], versions[0]["name"]));
     return children;
@@ -199,6 +210,13 @@ function renderMavenDependency(owner, pluginId, version) {
     return root;
 }
 
+function renderBadge() {
+    let root = render(`<div class="project-dependency"><img src="${window.location.origin}/badge"></div>`).firstChild;
+    let code = render(`<pre><code>${renderBadgeMarkdown()}</code></pre>`).firstChild;
+    root.appendChild(code);
+    return root;
+}
+
 function renderGradle(owner, pluginId, version) {
     return `
 repositories {
@@ -228,6 +246,10 @@ function renderMaven(owner, pluginId, version) {
   </dependency>
 </dependencies>
 `.trim();
+}
+
+function renderBadgeMarkdown() {
+    return `[![](${window.location.origin}/badge)](${window.location.href})`
 }
 
 function renderLoader() {
